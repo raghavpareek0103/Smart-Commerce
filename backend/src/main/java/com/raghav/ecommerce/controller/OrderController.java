@@ -9,7 +9,7 @@ import com.raghav.ecommerce.domain.PaymentMethod;
 import com.raghav.ecommerce.exception.OrderException;
 import com.raghav.ecommerce.exception.SellerException;
 import com.raghav.ecommerce.exception.UserException;
-import com.raghav.model.*;
+import com.raghav.ecommerce.model.*;
 import com.raghav.ecommerce.repository.PaymentOrderRepository;
 import com.raghav.ecommerce.response.PaymentLinkResponse;
 import lombok.RequiredArgsConstructor;

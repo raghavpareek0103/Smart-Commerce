@@ -4,7 +4,7 @@ import com.raghav.ecommerce.domain.OrderStatus;
 import com.raghav.ecommerce.domain.PaymentStatus;
 import com.raghav.ecommerce.exception.OrderException;
 import com.raghav.ecommerce.model.*;
-import com.raghav.model.*;
+import com.raghav.ecommerce.model.*;
 import com.raghav.ecommerce.repository.AddressRepository;
 import com.raghav.ecommerce.repository.OrderItemRepository;
 import com.raghav.ecommerce.repository.OrderRepository;

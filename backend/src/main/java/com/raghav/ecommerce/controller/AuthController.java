@@ -5,7 +5,7 @@ import com.raghav.ecommerce.domain.USER_ROLE;
 import com.raghav.ecommerce.exception.SellerException;
 import com.raghav.ecommerce.exception.UserException;
 import com.raghav.ecommerce.model.VerificationCode;
-import com.raghav.model.*;
+import com.raghav.ecommerce.model.*;
 import com.raghav.ecommerce.request.SignupRequest;
 import com.raghav.ecommerce.service.AuthService;
 import jakarta.mail.MessagingException;

@@ -3,7 +3,7 @@ package com.raghav.ecommerce.controller;
 import com.raghav.ecommerce.domain.PaymentMethod;
 import com.raghav.ecommerce.model.*;
 import com.raghav.ecommerce.service.*;
-import com.raghav.model.*;
+import com.raghav.ecommerce.model.*;
 import com.raghav.ecommerce.repository.CartItemRepository;
 import com.raghav.ecommerce.repository.CartRepository;
 import com.raghav.ecommerce.response.ApiResponse;

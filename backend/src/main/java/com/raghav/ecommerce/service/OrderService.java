@@ -5,7 +5,7 @@ import com.raghav.ecommerce.exception.OrderException;
 import com.raghav.ecommerce.model.Address;
 import com.raghav.ecommerce.model.Cart;
 import com.raghav.ecommerce.model.User;
-import com.raghav.model.*;
+import com.raghav.ecommerce.model.*;
 import com.raghav.ecommerce.model.Order;
 
 import java.util.List;
