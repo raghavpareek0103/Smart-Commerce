@@ -1,146 +1,215 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import {  Button, CircularProgress, TextField } from '@mui/material'
-import  { useEffect, useState } from 'react'
-import OTPInput from '../../components/OtpFild/OTPInput'
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import { api } from '../../../Config/Api';
+import type { Seller } from '../../../types/sellerTypes';
+import axios from 'axios';
 
-import { useAppDispatch, useAppSelector } from '../../../Redux Toolkit/Store';
-import { sendLoginOtp, verifyLoginOtp } from '../../../Redux Toolkit/Seller/sellerAuthenticationSlice';
-import { useNavigate } from 'react-router-dom';
-import { useFormik } from 'formik';
-
-const SellerLoginForm = () => {
-
-    const navigate = useNavigate();
-    const [otp, setOtp] = useState("");
-    const [isOtpSent, setIsOtpSent] = useState(false)
-    const [timer, setTimer] = useState<number>(30); // Timer state
-    const [isTimerActive, setIsTimerActive] = useState<boolean>(false);
-    const dispatch=useAppDispatch();
-    const {sellerAuth}=useAppSelector(store=>store)
-
-    const formik = useFormik({
-        initialValues: {
-            email: '',
-            otp: ''
-        },
-        
-        onSubmit: (values: any) => {
-            // Handle form submission
-            dispatch(verifyLoginOtp({email:values.email, otp, navigate}))
-            console.log('Form data:', values);
-        }
-    });
-
-    const handleOtpChange = (otp: any) => {
-
-        setOtp(otp);
-
-    };
-
-    const handleResendOTP = () => {
-        // Implement OTP resend logic
-        dispatch(sendLoginOtp(formik.values.email))
-        console.log('Resend OTP');
-        setTimer(30);
-        setIsTimerActive(true);
-    };
-
-    const handleSentOtp=()=>{
-        setIsOtpSent(true);
-        handleResendOTP();
-    }
-
-    const handleLogin=()=>{
-        formik.handleSubmit()
-    }
-
-    useEffect(() => {
-        let interval:any;
-
-        if (isTimerActive) {
-            interval = setInterval(() => {
-                setTimer(prev => {
-                    if (prev === 1) {
-                        clearInterval(interval);
-                        setIsTimerActive(false);
-                        return 30; // Reset timer for next OTP request
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-        }
-
-        return () => {
-            if (interval) clearInterval(interval);
-        };
-    }, [isTimerActive]);
-
-
-    return (
-        <div>
-            <h1 className='text-center font-bold text-xl text-primary-color pb-5'>Login As Seller</h1>
-            <form className="space-y-5">
-
-                <TextField
-                    fullWidth
-                    name="email"
-                    label="Enter Your Email"
-                    value={formik.values.email}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    error={formik.touched.email && Boolean(formik.errors.email)}
-                    helperText={formik.touched.email ? formik.errors.email as string : undefined}
-                />
-
-                {sellerAuth.otpSent && <div className="space-y-2">
-                    <p className="font-medium text-sm">
-                        * Enter OTP sent to your email
-                    </p>
-                    <OTPInput
-                        length={6}
-                        onChange={handleOtpChange}
-                        error={false}
-                    />
-                    <p className="text-xs space-x-2">
-                            {isTimerActive ? (
-                                <span>Resend OTP in {timer} seconds</span>
-                            ) : (
-                                <>
-                                    Didn’t receive OTP?{" "}
-                                    <span 
-                                        onClick={handleResendOTP} 
-                                        className="text-teal-600 cursor-pointer hover:text-teal-800 font-semibold"
-                                    >
-                                        Resend OTP
-                                    </span>
-                                </>
-                            )}
-                        </p>
-                    {formik.touched.otp && formik.errors.otp && <p>{formik.errors.otp as string}</p>}
-                </div>}
-
-                {sellerAuth.otpSent &&<div>
-                    <Button onClick={handleLogin} 
-                    fullWidth variant='contained' sx={{ py: "11px" }}>Login</Button>
-                </div>}
-
-                {!sellerAuth.otpSent && <Button
-                disabled={sellerAuth.loading} 
-                fullWidth 
-                variant='contained' 
-                onClick={handleSentOtp}
-                sx={{ py: "11px" }}>{
-                    sellerAuth.loading ? <CircularProgress  />: "sent otp"}</Button>
-                }
-
-
-
-            </form>
-
-
-            
-        </div>
-    )
+interface SellerAuthState {
+    otpSent: boolean;
+    error: string | null;
+    loading: boolean;
+    jwt: string | null;
+    sellerCreated: string | null;
 }
 
-export default SellerLoginForm
+const initialState: SellerAuthState = {
+    otpSent: false,
+    error: null,
+    loading: false,
+    jwt: null,
+    sellerCreated: "",
+};
+
+const API_URL = '/sellers';
+
+export const sendLoginOtp = createAsyncThunk(
+    'otp/sendLoginOtp',
+    async (email: string, { rejectWithValue }) => {
+        try {
+            const { data } = await aapi.post('/auth/sent/login-signup-otp', { email });
+
+            console.log('OTP sent - ', email, data);
+
+            return { email };
+        } catch (error: any) {
+            console.log('OTP send error:', error);
+
+            return rejectWithValue(
+                error.response?.data?.message || 'Failed to send OTP'
+            );
+        }
+    }
+);
+
+export const verifyLoginOtp = createAsyncThunk(
+    'otp/verifyLoginOtp',
+    async (
+        data: {
+            email: string;
+            otp: string;
+            navigate: any;
+        },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await api.post(
+                '/sellers/verify/login-top',
+                data
+            );
+
+            console.log('Seller login success - ', response.data);
+
+            localStorage.setItem('jwt', response.data.jwt);
+
+            data.navigate('/seller');
+
+            return response.data;
+        } catch (error: any) {
+            console.log(
+                'OTP verification error:',
+                error.response?.data
+            );
+
+            return rejectWithValue(
+                error.response?.data?.message ||
+                'Failed to verify OTP'
+            );
+        }
+    }
+);
+
+export const createSeller = createAsyncThunk<Seller, Seller>(
+    'sellers/createSeller',
+    async (seller: Seller, { rejectWithValue }) => {
+        try {
+            const response = await api.post<Seller>(
+                API_URL,
+                seller
+            );
+
+            console.log('Create seller:', response.data);
+
+            return response.data;
+        } catch (error: any) {
+            if (axios.isAxiosError(error) && error.response) {
+                console.error(
+                    'Create seller error response data:',
+                    error.response.data
+                );
+
+                console.error(
+                    'Create seller error response status:',
+                    error.response.status
+                );
+
+                console.error(
+                    'Create seller error response headers:',
+                    error.response.headers
+                );
+
+                return rejectWithValue(
+                    error.response.data?.message ||
+                    error.message
+                );
+            }
+
+            console.error(
+                'Create seller error message:',
+                error.message
+            );
+
+            return rejectWithValue(
+                'Failed to create seller'
+            );
+        }
+    }
+);
+
+const sellerAuthSlice = createSlice({
+    name: 'sellerAuth',
+
+    initialState,
+
+    reducers: {
+        resetSellerAuthState: (state) => {
+            state.otpSent = false;
+            state.error = null;
+            state.loading = false;
+            state.jwt = null;
+            state.sellerCreated = '';
+        },
+    },
+
+    extraReducers: (builder) => {
+
+        // SEND OTP
+        builder
+            .addCase(sendLoginOtp.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+
+            .addCase(sendLoginOtp.fulfilled, (state) => {
+                state.loading = false;
+                state.otpSent = true;
+                state.error = null;
+            })
+
+            .addCase(sendLoginOtp.rejected, (state, action) => {
+                state.loading = false;
+                state.error =
+                    action.payload as string ||
+                    'Failed to send OTP';
+            });
+
+        // VERIFY OTP
+        builder
+            .addCase(verifyLoginOtp.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+
+            .addCase(verifyLoginOtp.fulfilled, (state, action) => {
+                state.loading = false;
+                state.jwt = action.payload.jwt;
+                state.error = null;
+            })
+
+            .addCase(verifyLoginOtp.rejected, (state, action) => {
+                state.loading = false;
+                state.error =
+                    action.payload as string ||
+                    'Failed to verify OTP';
+            });
+
+        // CREATE SELLER
+        builder
+            .addCase(createSeller.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+
+            .addCase(
+                createSeller.fulfilled,
+                (state, action: PayloadAction<Seller>) => {
+                    state.sellerCreated =
+                        'verification email sent to you';
+
+                    state.loading = false;
+                    state.error = null;
+                }
+            )
+
+            .addCase(createSeller.rejected, (state, action) => {
+                state.loading = false;
+                state.error =
+                    (action.payload as string) ||
+                    'Failed to create seller';
+            });
+    },
+});
+
+export const {
+    resetSellerAuthState,
+} = sellerAuthSlice.actions;
+
+export default sellerAuthSlice.reducer;

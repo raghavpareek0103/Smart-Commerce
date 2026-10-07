@@ -50,35 +50,68 @@ public class AuthServiceImpl implements AuthService {
 
 
     @Override
-    public void sentLoginOtp(String email) throws UserException, MessagingException {
+    public void sentLoginOtp(String email)
+            throws UserException, MessagingException {
 
+        System.out.println("=================================");
+        System.out.println("OTP REQUEST RECEIVED");
+        System.out.println("EMAIL: " + email);
+        System.out.println("=================================");
 
         String SIGNING_PREFIX = "signing_";
 
         if (email.startsWith(SIGNING_PREFIX)) {
             email = email.substring(SIGNING_PREFIX.length());
+
+            System.out.println("SIGNING PREFIX REMOVED");
+            System.out.println("ACTUAL EMAIL: " + email);
+
             userService.findUserByEmail(email);
         }
 
-        VerificationCode isExist = verificationCodeRepository
-                .findByEmail(email);
+        // Check existing OTP
+        VerificationCode existingCode =
+                verificationCodeRepository.findByEmail(email);
 
-        if (isExist != null) {
-            verificationCodeRepository.delete(isExist);
+        if (existingCode != null) {
+
+            System.out.println("OLD OTP FOUND - DELETING");
+
+            verificationCodeRepository.delete(existingCode);
         }
 
+        // Generate new OTP
         String otp = OtpUtils.generateOTP();
 
+        System.out.println("NEW OTP GENERATED: " + otp);
+
+        // Save OTP in database
         VerificationCode verificationCode = new VerificationCode();
+
         verificationCode.setOtp(otp);
         verificationCode.setEmail(email);
+
         verificationCodeRepository.save(verificationCode);
 
-        String subject = "Shopzy Login/Signup Otp";
-        String text = "your login otp is - ";
-        emailService.sendVerificationOtpEmail(email, otp, subject, text);
-    }
+        System.out.println("OTP SAVED IN DATABASE");
 
+        // Email details
+        String subject = "Shopzy Login/Signup OTP";
+
+        String text =
+                "Your Shopzy verification OTP is: ";
+
+        System.out.println("SENDING OTP EMAIL...");
+
+        // Send email
+        try {
+            emailService.sendVerificationOtpEmail(email, otp, subject, text);
+        } catch (Exception e) {
+            System.out.println("EMAIL FAILED. USE THIS OTP: " + otp);
+        }
+
+        System.out.println("OTP PROCESS COMPLETED");
+    }
     @Override
     public String createUser(SignupRequest req) throws SellerException {
 
